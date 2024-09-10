@@ -5,6 +5,7 @@ import DefaultLayout from '../components/layouts/DefaultLayout.vue'
 
 <template>
   <DefaultLayout>
+    <CAlert :visible="message" :color="color" dismissible @close="!message">{{ message }}</CAlert>
     <CButton color="success" @click="addPost()">Add Post</CButton>
     <CTable striped>
       <CTableHead>
@@ -16,7 +17,7 @@ import DefaultLayout from '../components/layouts/DefaultLayout.vue'
         </CTableRow>
       </CTableHead>
       <CTableBody>
-        <CTableRow id="post-{{ item.id }}" v-for="item in items" :key="item.id">
+        <CTableRow v-if="(items.length) !== 0" id="post-{{ item.id }}" v-for="item in items" :key="item.id">
           <CTableHeaderCell scope="row">{{ item.id }}</CTableHeaderCell>
           <CTableDataCell>{{ item.userId }}</CTableDataCell>
           <CTableDataCell>{{ item.title }}</CTableDataCell>
@@ -29,7 +30,10 @@ import DefaultLayout from '../components/layouts/DefaultLayout.vue'
 
           </CTableDataCell>
         </CTableRow>
+        <CTableRow v-if="(items.length) === 0">
+          <CTableHeaderCell colspan="4" scope="row" class="text-center text-danger"> No Data Found</CTableHeaderCell>
 
+        </CTableRow>
       </CTableBody>
     </CTable>
     <CModal backdrop="static" :visible="visibleStaticBackdropDemo" @close="() => { visibleStaticBackdropDemo = false }">
@@ -47,15 +51,40 @@ import DefaultLayout from '../components/layouts/DefaultLayout.vue'
 
     <CModal backdrop="static" :visible="visibleStaticBackdropEdit" @close="() => { visibleStaticBackdropEdit = false }">
       <CModalHeader>
-        <CModalTitle>Edit {{ post.title }}</CModalTitle>
+        <CModalTitle>Edit {{ newPost.title }}</CModalTitle>
       </CModalHeader>
-      <CModalBody> Edit Form Data</CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="() => { visibleStaticBackdropEdit = false }">
-          Close
-        </CButton>
-        <CButton color="primary">Save changes</CButton>
-      </CModalFooter>
+      <CForm @submit.prevent="submitFormUpdate">
+        <CModalBody>
+          <div v-if="errors.length" class="error-message">
+            <ul>
+              <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
+            </ul>
+          </div>
+          <div class="mb-3">
+
+            <CFormSelect v-model="newPost.userid">
+              <option>Select One User</option>
+              <option v-for="number in numbers" :selected="uid === number" :key="number" :value="number">{{ number }}
+              </option>
+            </CFormSelect>
+          </div>
+          <div class="mb-3">
+            <CFormLabel for="exampleFormControlInput1">Title</CFormLabel>
+            <CFormInput v-model="newPost.title" type="text" placeholder="Title" />
+          </div>
+          <div class="mb-3">
+            <CFormLabel for="exampleFormControlTextarea1">Body</CFormLabel>
+            <CFormTextarea v-model="newPost.body" id="exampleFormControlTextarea1" rows="3"></CFormTextarea>
+          </div>
+
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" @click="() => { visibleStaticBackdropAdd = false }">
+            Close
+          </CButton>
+          <CButton type="submit" color="primary">Save changes</CButton>
+        </CModalFooter>
+      </CForm>
     </CModal>
 
 
@@ -63,24 +92,36 @@ import DefaultLayout from '../components/layouts/DefaultLayout.vue'
       <CModalHeader>
         <CModalTitle>Add Post</CModalTitle>
       </CModalHeader>
-      <CModalBody>
-        <CForm>
+      <CForm @submit.prevent="submitForm">
+        <CModalBody>
+          <div v-if="errors.length" class="error-message">
+            <ul>
+              <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
+            </ul>
+          </div>
+          <div class="mb-3">
+            <CFormSelect v-model="newPost.userid">
+              <option>Select One User</option>
+              <option v-for="number in numbers" :key="number" :value="number">{{ number }}</option>
+            </CFormSelect>
+          </div>
           <div class="mb-3">
             <CFormLabel for="exampleFormControlInput1">Title</CFormLabel>
-            <CFormInput type="text" placeholder="Title" />
+            <CFormInput v-model="newPost.title" type="text" placeholder="Title" />
           </div>
           <div class="mb-3">
             <CFormLabel for="exampleFormControlTextarea1">Body</CFormLabel>
-            <CFormTextarea id="exampleFormControlTextarea1" rows="3"></CFormTextarea>
+            <CFormTextarea v-model="newPost.body" id="exampleFormControlTextarea1" rows="3"></CFormTextarea>
           </div>
-        </CForm>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="() => { visibleStaticBackdropAdd = false }">
-          Close
-        </CButton>
-        <CButton color="primary">Save changes</CButton>
-      </CModalFooter>
+
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" @click="() => { visibleStaticBackdropAdd = false }">
+            Close
+          </CButton>
+          <CButton type="submit" color="primary">Save changes</CButton>
+        </CModalFooter>
+      </CForm>
     </CModal>
   </DefaultLayout>
 </template>
@@ -92,7 +133,7 @@ import { CTable, CTableRow, CTableHead, CTableHeaderCell, CTableBody, CTableData
 
 import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter } from '@coreui/bootstrap-vue';
 
-import { CForm, CFormLabel, CFormInput, CFormTextarea } from '@coreui/bootstrap-vue';
+import {CAlert, CForm, CFormLabel, CFormInput, CFormTextarea, CFormSelect } from '@coreui/bootstrap-vue';
 export default {
   components: {
 
@@ -100,15 +141,20 @@ export default {
   data() {
     return {
       id: 1,
+      uid: '',
+      numbers: null,
       visibleStaticBackdropDemo: false,
       visibleStaticBackdropEdit: false,
       visibleStaticBackdropAdd: false,
       items: [],
+      color:null,
+      message:false,
       post: [],
       newPost: {
+        userid: '',
         title: '',
         body: ''
-      }
+      }, errors: [],
     };
   },
   methods: {
@@ -121,20 +167,99 @@ export default {
         console.error(err);
       }
     },
+    async userId() {
+      try {
+        const response = await axios.get('http://tempo.test/api/userids');
+        this.numbers = response.data;
+      } catch (err) {
+        this.error = 'Error fetching data: ' + err.message;
+        console.error(err);
+      }
+    },
     addPost() {
       this.visibleStaticBackdropAdd = !this.visibleStaticBackdropAdd;
-      console.log(this.newPost)
+
+    }, validateForm() {
+      this.errors = [];
+      if (!this.newPost.title) {
+        this.errors.push('Title is required.');
+      }
+      if (!this.newPost.body) {
+        this.errors.push('Body is required.');
+      }
+      return this.errors.length === 0;
     },
+
+    async submitForm() {
+      this.message=false;
+      if (this.validateForm()) {
+        console.log('Form data before submission:', this.newPost);
+        try {
+          const response = await axios.post('http://tempo.test/api/posts', this.newPost);
+          // console.log('Form data after submission:', response.data);
+          // Emit the successful form submission
+          this.$emit('submit', response.data);
+          this.newPost.userid = '';
+          this.newPost.title = '';
+          this.newPost.body = '';
+          this.color=(response.data.success==true) ?'success' : 'danger';
+          this.message=response.data.message;
+          this.visibleStaticBackdropAdd = !this.visibleStaticBackdropAdd;
+          this.loadData();
+        } catch (error) {
+          console.error('Error submitting form:', error);
+        }
+      } else {
+        console.log('Validation errors:', this.errors);
+      }
+    },
+
     editPost(id) {
-      console.log(id);
+      this.id = id;
+      axios
+        .get('http://tempo.test/api/posts/' + this.id)
+        .then(response => {
+          this.newPost.title = response.data.title;
+          this.newPost.body = response.data.body;
+          this.uid = response.data.userId;
+          this.newPost.userid = response.data.userId;
+          //console.log(response);
+          
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
       this.visibleStaticBackdropEdit = !this.visibleStaticBackdropEdit;
+    }, async submitFormUpdate() {
+      this.message=false;
+      if (this.validateForm()) {
+        console.log('Form data before submission:', this.newPost);
+        try {
+          const response = await axios.patch('http://tempo.test/api/posts/'+ this.id, this.newPost);
+          
+          // Emit the successful form submission
+          this.$emit('submit', response.data);
+          this.color=(response.data.success==true) ?'success' : 'danger';
+          this.message=response.data.message;
+          // console.log('Form data after submission:', response.data);
+          this.visibleStaticBackdropEdit = !this.visibleStaticBackdropEdit;
+          this.loadData();
+        } catch (error) {
+          console.error('Error submitting form:', error);
+        }
+      } else {
+        console.log('Validation errors:', this.errors);
+      }
     },
     deletePost(id) {
+      this.message=false;
       console.log(id)
       this.id = id;
       axios
         .delete('http://tempo.test/api/posts/' + this.id)
         .then(response => {
+          this.color=(response.data.success==true) ?'success' : 'danger';
+          this.message=response.data.message;
           this.loadData();
           console.log(response);
         })
@@ -158,7 +283,7 @@ export default {
   },
   mounted() {
     this.loadData();
-
+    this.userId();
   }
 };
 </script>
