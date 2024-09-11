@@ -1,7 +1,19 @@
 
 <script setup>
-import { RouterLink } from 'vue-router'
-
+import { RouterLink,useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
+const authStore = useAuthStore()
+const isLoggedIn = authStore.isLoggedIn()
+const user = authStore.user
+const router = useRouter()
+const handleLogout = async () => {
+  try {
+    await authStore.logout()
+    router.push('/login') // Redirect to login page after logout
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
+}
 </script>
 <template>
 
@@ -16,11 +28,19 @@ import { RouterLink } from 'vue-router'
         </li>
         <li class="nav-item">        
             <RouterLink class="nav-link" to="/about">About</RouterLink>
-        </li>        
+        </li>   
+        <li class="nav-item">          
+          <RouterLink to="/post" class="nav-link active" aria-current="page">Post</RouterLink>
+        </li>     
       </ul>
-      <div class="col-md-3 text-end">
+      <div class="col-md-3 text-end" v-if="!isLoggedIn">
         <RouterLink type="button" to="/login" class="btn btn-outline-primary me-2">Login</RouterLink>
         <RouterLink type="button" to="/register" class="btn btn-primary">Sign-up</RouterLink>
+      </div>
+      <div class="col-md-3 text-end" v-if="isLoggedIn">
+        
+        <button @click="handleLogout" class="btn btn-outline-primary me-2">Logout</button>
+       
       </div>
     </header>
   </div>

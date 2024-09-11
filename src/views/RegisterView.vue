@@ -1,49 +1,83 @@
 <script setup>
-
+import { ref } from 'vue'
+import axios from 'axios'
 import DefaultLayout from '../components/layouts/DefaultLayout.vue'
+import { CForm, CFormInput, CFormLabel, CButton } from '@coreui/bootstrap-vue'
+
+// Initialize a reactive form object with nested user data and errors
+const form = ref({
+   user: {
+      name: '',
+      email: '',
+      password: ''
+   },
+   errors: []
+});
+function resetForm() {
+  form.value = {
+    user: {
+      email: '',
+      password: ''
+    },
+    errors: []
+  };
+}
+async function submitRegister(event) {
+   event.preventDefault(); // Prevent default form submission behavior
+
+   console.log(form.value.user); // Log the form data
+
+   try {
+      const response = await axios.post('http://tempo.test/api/auth/register', form.value.user);
+
+      // Handle the successful form submission
+      console.log(response.data);
+      // Optionally, clear errors or reset the form on success
+      form.value.errors = [];
+      resetForm();
+   } catch (error) {
+      // Handle errors
+      console.error('Error submitting form:', error);
+      form.value.errors = ['Error submitting form: ' + error.message];
+   }
+}
 </script>
 
 <template>
-  <DefaultLayout>    
-    <div class="container">
-        <div class="row">
-			<div class="col-md-5 mx-auto">
-			
-			      <div class="myform form ">
-                        <div class="logo mb-3">
-                           <div class="col-md-12 text-center">
-                              <h1>Signup</h1>
-                           </div>
-                        </div>
-                        <form action="#" name="registration" novalidate="novalidate">
-                           <div class="form-group">
-                              <label for="exampleInputEmail1">First Name</label>
-                              <input type="text" name="firstname" class="form-control" id="firstname" aria-describedby="emailHelp" placeholder="Enter Firstname">
-                           </div>
-                           <div class="form-group">
-                              <label for="exampleInputEmail1">Last Name</label>
-                              <input type="text" name="lastname" class="form-control" id="lastname" aria-describedby="emailHelp" placeholder="Enter Lastname">
-                           </div>
-                           <div class="form-group">
-                              <label for="exampleInputEmail1">Email address</label>
-                              <input type="email" name="email" class="form-control" id="email" aria-describedby="emailHelp" placeholder="Enter email">
-                           </div>
-                           <div class="form-group">
-                              <label for="exampleInputEmail1">Password</label>
-                              <input type="password" name="password" id="password" class="form-control" aria-describedby="emailHelp" placeholder="Enter Password">
-                           </div>
-                           <div class="col-md-12 text-center mb-3">
-                              <button type="submit" class=" btn btn-block mybtn btn-primary tx-tfm">Get Started For Free</button>
-                           </div>
-                           <div class="col-md-12 ">
-                              <div class="form-group">
-                                 <p class="text-center"><a href="#" id="signin">Already have an account?</a></p>
-                              </div>
-                           </div>
-                            </form></div>
-                        
+   <DefaultLayout>
+      <div class="container">
+         <div class="row">
+            <div class="col-md-5 mx-auto">
+               <div class="myform form">
+                  <div class="logo mb-3">
+                     <div class="col-md-12 text-center">
+                        <h1>Register</h1>
                      </div>
-		</div>
+                  </div>
+                  <CForm @submit.prevent="submitRegister">
+                     <div class="mb-3">
+                        <CFormLabel for="name">Name</CFormLabel>
+                        <CFormInput type="text" v-model="form.user.name" id="name" placeholder="Name" />
+                     </div>
+                     <div class="mb-3">
+                        <CFormLabel for="email">Email address</CFormLabel>
+                        <CFormInput type="email" v-model="form.user.email" id="email" placeholder="Email Address" />
+                     </div>
+                     <div class="mb-3">
+                        <CFormLabel for="password">Password</CFormLabel>
+                        <CFormInput type="password" v-model="form.user.password" id="password" placeholder="Password" />
+                     </div>
+                     <CButton color="success">Login</CButton>
+                     <!-- Display errors -->
+                     <div v-if="form.errors.length" class="alert alert-danger mt-3">
+                        <ul>
+                           <li v-for="(error, index) in form.errors" :key="index">{{ error }}</li>
+                        </ul>
+                     </div>
+                  </CForm>
+               </div>
+            </div>
+         </div>
       </div>
-  </DefaultLayout>
+   </DefaultLayout>
 </template>

@@ -1,10 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { useAuthStore } from '../stores/authStore'
+import axios from 'axios'
 import DefaultLayout from '../components/layouts/DefaultLayout.vue'
 import { CForm, CFormInput, CFormLabel, CButton } from '@coreui/bootstrap-vue'
-const authStore = useAuthStore()
-import { useRouter } from 'vue-router'
+
 // Initialize a reactive form object with nested user data and errors
 const form = ref({
   user: {
@@ -13,16 +12,19 @@ const form = ref({
   },
   errors: []
 });
-const router = useRouter()
+
 async function submitlogin(event) {
     event.preventDefault(); // Prevent default form submission behavior
 
     console.log(form.value.user); // Log the form data
 
     try {
-       await authStore.login(form.value.user.email,form.value.user.password)        
+        const response = await axios.post('http://tempo.test/api/auth/login', form.value.user);
+
+        // Handle the successful form submission
+        console.log(response.data);
+        // Optionally, clear errors or reset the form on success
         form.value.errors = [];
-        router.push('/post')
     } catch (error) {
         // Handle errors
         console.error('Error submitting form:', error);

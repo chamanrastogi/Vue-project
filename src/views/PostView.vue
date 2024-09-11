@@ -79,10 +79,8 @@ import DefaultLayout from '../components/layouts/DefaultLayout.vue'
 
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" @click="() => { visibleStaticBackdropAdd = false }">
-            Close
-          </CButton>
-          <CButton type="submit" color="primary">Save changes</CButton>
+         
+          <CButton type="submit" color="primary">Update</CButton>
         </CModalFooter>
       </CForm>
     </CModal>
@@ -116,10 +114,7 @@ import DefaultLayout from '../components/layouts/DefaultLayout.vue'
 
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" @click="() => { visibleStaticBackdropAdd = false }">
-            Close
-          </CButton>
-          <CButton type="submit" color="primary">Save changes</CButton>
+          <CButton type="submit" color="primary">Save</CButton>
         </CModalFooter>
       </CForm>
     </CModal>
@@ -192,6 +187,7 @@ export default {
 
     async submitForm() {
       this.message=false;
+      this.color='';
       if (this.validateForm()) {
         console.log('Form data before submission:', this.newPost);
         try {
@@ -233,7 +229,7 @@ export default {
     }, async submitFormUpdate() {
       this.message=false;
       if (this.validateForm()) {
-        console.log('Form data before submission:', this.newPost);
+        //console.log('Form data before submission:', this.newPost);
         try {
           const response = await axios.patch('http://tempo.test/api/posts/'+ this.id, this.newPost);
           
